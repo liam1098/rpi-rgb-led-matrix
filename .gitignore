@@ -4,3 +4,4 @@
 *.so
 .envrc
 .direnv
+__pycache__
