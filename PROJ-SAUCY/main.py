@@ -53,6 +53,14 @@ image_dict = {
 }
 
 ##################################################################
+# Strobe key mapping
+strobe_dict = {
+    "1" : [1],
+    "2" : [1, 0.5, 0.5],
+    "3" : [1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25]
+}
+
+##################################################################
 # Startup Initialisation
 options = RGBMatrixOptions()
 options.rows = 32
@@ -65,7 +73,7 @@ options.pixel_mapper_config = 'Rotate:180'
 matrix = RGBMatrix(options=options)
 matrix.Clear()
 
-controller = Controller(matrix)
+controller = Controller(matrix, strobe_dict)
 controller.SetBpm(130)
 image_factory = ImageFactory(matrix, controller, image_dict)
 
@@ -83,12 +91,16 @@ image_factory.StartImageWorker()
 try:
     while True:
         user_input = getch()
+        print("Setting var: " + user_input)
         if user_input == "b":
             bpm = input("Enter BPM and press enter: ")
             controller.SetBpm(bpm)
+        elif user_input == "*":
+            controller.DoubleBpmMultiplier()
+        elif user_input == "/":
+            controller.HalfBpmMultiplier()
         else:
             # Send the input to both strobe and Image Workers
-            print("Setting var: " + user_input)
             image_factory.SetImage(user_input)
             controller.SetStrobeMode(user_input)
 

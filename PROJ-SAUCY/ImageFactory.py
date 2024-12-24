@@ -35,19 +35,20 @@ class ImageFactory:
                 self.old_id = self.id
                 self.id = id
 
-    def ImageWorkFunc(self):
+    def ImageInputWorkFunc(self):
         while self.exit_thread == False:
-            with self.id_mutex:
-                if self.id != self.old_id:
-                    self.FormatAndSendImage(os.path.dirname(__file__) + "/img/" + self.image_dict[self.id])
-                    self.old_id = self.id
-                else:
-                    time.sleep(0.001)
+            self.id_mutex.acquire()
+            if self.id != self.old_id:
+                self.FormatAndSendImage(os.path.dirname(__file__) + "/img/" + self.image_dict[self.id])
+                self.old_id = self.id
+            else:
+                self.id_mutex.release()
+                time.sleep(0.001)
 
 
     def StartImageWorker(self):
         self.exit_thread = False
-        self.thread = Thread(target=self.ImageWorkFunc)
+        self.thread = Thread(target=self.ImageInputWorkFunc)
         self.thread.start()
 
         
