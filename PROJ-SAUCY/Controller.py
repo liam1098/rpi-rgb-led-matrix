@@ -27,6 +27,8 @@ class Controller:
 
     def SetBpm(self, bpm):
         with self.bpm_mutex:
+            self.bpm_multiplier = 1
+
             self.bpm = bpm
             self.interval_secs = 60 / int(bpm)
 

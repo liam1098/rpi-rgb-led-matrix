@@ -49,7 +49,13 @@ def getch():
 # Image key mapping
 image_dict = {
     "q" : "record_rgb.jpg",
-    "w" : "cowboy_frog.png"
+    "w" : "record.jpg",
+    "s" : "2SAUCEmushroom.jpg",
+    "r" : "records.gif",
+    "t" : "records-fade.gif",
+    "y" : "records-fade-more.gif",
+    "f" : "fat-man.gif",
+    "l" : "loading.gif"
 }
 
 ##################################################################
@@ -57,7 +63,24 @@ image_dict = {
 strobe_dict = {
     "1" : [1],
     "2" : [1, 0.5, 0.5],
-    "3" : [1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25]
+    "3" : [1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25],
+    "6" : [0.25],
+    "0" : [0.01]
+}
+
+##################################################################
+# Command mapping for help dict
+help_dict = {
+    "H" : "Display all commands",
+    "." : "Show all current GIF/image key mappings",
+    "," : "Show all current strobe settings",
+    "B" : "Manual BPM change",
+    "F" : "Manual GIF framerate change",
+    "G" : "Toggle GIF select/image select",
+    "*" : "Double BPM",
+    "/" : "Half BPM",
+    "+" : "Double GIF framerate",
+    "-" : "Half GIF framerate"
 }
 
 ##################################################################
@@ -73,9 +96,13 @@ options.pixel_mapper_config = 'Rotate:180'
 matrix = RGBMatrix(options=options)
 matrix.Clear()
 
+gif_mode = False
+strobe_mode = False
+
 controller = Controller(matrix, strobe_dict)
 controller.SetBpm(130)
 image_factory = ImageFactory(matrix, controller, image_dict)
+image_factory.SetGifFrameRate(130)
 
 controller.StartStrobeWorker()
 image_factory.StartImageWorker()
@@ -87,22 +114,72 @@ image_factory.StartImageWorker()
 
 ##################################################################
 
+def CheckInt(input):
+    try:
+        input = int(input)
+        return input
+    except:
+        print("Invalid Input.")
+        return False
+
 # Continuous loop that handles keystrokes
 try:
     while True:
         user_input = getch()
-        print("Setting var: " + user_input)
-        if user_input == "b":
-            bpm = input("Enter BPM and press enter: ")
-            controller.SetBpm(bpm)
-        elif user_input == "*":
-            controller.DoubleBpmMultiplier()
-        elif user_input == "/":
-            controller.HalfBpmMultiplier()
-        else:
-            # Send the input to both strobe and Image Workers
-            image_factory.SetImage(user_input)
-            controller.SetStrobeMode(user_input)
+
+        match user_input:
+            case "B":
+                bpm = input("Enter BPM and press enter: ")
+                if CheckInt(bpm):
+                    controller.SetBpm(bpm)
+
+            case "F":
+                gif_fr = input("Enter GIF framerate and press enter: ")
+                if CheckInt(gif_fr):
+                    image_factory.SetGifFrameRate(gif_fr)
+
+            case "G":  # Toggle GIF mode
+                gif_mode = not gif_mode
+                if gif_mode:
+                    print("GIF select.")
+                else:
+                    print("Image select.")
+
+            case "H":
+                print("\nInstructions:\n")
+                for key, value in help_dict.items():
+                    print(f"\t{key}: {value}")
+                print()
+
+            case ".":
+                print("\nList of images:\n")
+                for key, value in image_dict.items():
+                    print(f"\t{key}: {value}")
+                print()
+
+            case ",":
+                print("\nList of strobe patterns:\n")
+                for key, value in strobe_dict.items():
+                    print(f"\t{key}: {value}")
+                print()
+
+            case "*":
+                controller.DoubleBpmMultiplier()
+            case "/":
+                controller.HalfBpmMultiplier()
+            case "+":
+                image_factory.DoubleFRMultiplier()
+            case "-":
+                image_factory.HalfFRMultiplier()
+
+            case _:
+                # Send the input to both strobe and Image Workers
+                controller.SetStrobeMode(user_input)
+                if gif_mode:
+                    user_input = user_input + " (gif)"
+                image_factory.SetImage(user_input)
+                output = "Setting var: " + user_input
+                print(output)
 
 except KeyboardInterrupt:
     sys.exit(0)
